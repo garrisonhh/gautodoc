@@ -5,11 +5,13 @@ a simple automatic documentation generator.
 
 import os
 import sys
+import shutil
 # I feel a moral obligation to mention that importlib might be the absolute
 # worst mess of a library I have ever seen in 10 years of programming. People
 # gets paid six figures to write code like this, and for this I feel existential
 # horror at the absurdity of the unfairness of the world we live in.
 import importlib
+from importlib import util as importlib_util
 import inspect
 import argparse
 import html
@@ -23,18 +25,25 @@ def error_exit(msg):
 
 # module loading ===============================================================
 
-def load_module(pathname):
+def load_module(relpath):
     """programmatically loads a module for doc generation from a path."""
 
-    name = os.path.splitext(os.path.basename(pathname))[0]
-    spec = importlib.util.spec_from_file_location(name, pathname)
+    abspath = os.path.abspath(relpath)
 
-    # if pathname doesn't exist, instead of throwing a reasonable error, this
+    # ensure directory is in sys.path
+    dirpath = os.path.dirname(abspath)
+    sys.path.insert(0, dirpath)
+
+    # get importlib spec
+    name = os.path.splitext(os.path.basename(abspath))[0]
+    spec = importlib_util.find_spec(name)
+
+    # if module doesn't exist, instead of throwing a reasonable error, this
     # does the **UNDOCUMENTED** behavior of returning None
     if spec is None:
-        error_exit(f"could not load module at {args.module}")
+        error_exit(f"could not load module at {abspath}")
 
-    module = importlib.util.module_from_spec(spec)
+    module = importlib_util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
     return module
@@ -208,7 +217,7 @@ def gen_entry(entry: Entry) -> str:
 
     return s
 
-def gen_html(stylesheets: list[str], entry: Entry) -> str:
+def gen_html(stylesheets: list[str], entries: list[Entry]) -> str:
     """generate document html"""
 
     s = ""
@@ -223,11 +232,39 @@ def gen_html(stylesheets: list[str], entry: Entry) -> str:
     s += "</head>"
 
     # body
-    s += "<body>" + gen_entry(entry) + "</body>"
+    s += "<body>"
+    for entry in entries:
+        s += gen_entry(entry)
+    s += "</body>"
 
     s += "</html>"
 
     return s
+
+# output =======================================================================
+
+def make_clean_dir(dirpath):
+    """makes and/or cleans output directory. returns abspath"""
+    dirpath = os.path.abspath(dirpath)
+    shutil.rmtree(dirpath, ignore_errors=True)
+    os.mkdir(dirpath)
+
+    return dirpath
+
+def copy_styles(dirpath, styles):
+    """copies styles over to output dir, returns new relative paths"""
+    copied = []
+    for stylepath in styles:
+        stylepath = os.path.abspath(stylepath)
+        basename = os.path.basename(stylepath)
+        shutil.copyfile(stylepath, os.path.join(dirpath, basename))
+        copied.append(os.path.join("/", basename))
+
+    return copied
+
+def write_html(dirpath, html):
+    with open(os.path.join(dirpath, 'index.html'), 'w') as f:
+        f.write(html)    
 
 # main =========================================================================
 
@@ -236,17 +273,16 @@ def parse_args():
         description="generate documentation for a module",
     )
     parser.add_argument(
-        "module",
-        metavar="<module>",
+        "modules",
+        nargs='+',
         type=str,
-        help="filepath for the module",
+        help="filepaths for the modules to be documented",
     )
     parser.add_argument(
         "-o",
-        metavar="<outfile.html>",
+        metavar="<output>",
         required=True,
-        type=argparse.FileType('w'),
-        help="filepath for the html output",
+        help="directory for the html output",
     )
     parser.add_argument(
         "-s",
@@ -259,12 +295,14 @@ def parse_args():
 
 def main():
     args = parse_args()
-    stylesheets = list(map(os.path.abspath, args.stylesheets))
 
-    mod = load_module(args.module)
-    docs = document(mod)
+    # gen docs for the module
+    docs = list(map(document, map(load_module, args.modules)))
 
-    args.o.write(gen_html(stylesheets, docs))
+    # write everything
+    dirpath = make_clean_dir(args.o)
+    stylesheets = copy_styles(dirpath, args.stylesheets)
+    write_html(dirpath, gen_html(stylesheets, docs))
 
 if __name__ == '__main__':
     main()
