@@ -11,6 +11,7 @@ import argparse
 import html
 from pprint import pprint
 import analysis
+from common import *
 
 # html output ==================================================================
 

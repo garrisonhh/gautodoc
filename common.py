@@ -3,7 +3,8 @@ stuff that should be stdlib
 """
 
 from typing import NoReturn
-from dataclasses import dataclass
+import sys
+import dataclasses
 
 def error_exit(msg: str) -> NoReturn:
     """exit failure"""
@@ -13,5 +14,4 @@ def error_exit(msg: str) -> NoReturn:
 
 def simple(obj):
     """basically turns a class into an immutable struct"""
-
-    return dataclass(obj, frozen=True)
+    return dataclasses.dataclass(obj, frozen=True)
