@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 a simple automatic documentation generator.
 """
@@ -6,133 +6,11 @@ a simple automatic documentation generator.
 import os
 import sys
 import shutil
-# I feel a moral obligation to mention that importlib might be the absolute
-# worst mess of a library I have ever seen in 10 years of programming. People
-# gets paid six figures to write code like this, and for this I feel existential
-# horror at the absurdity of the unfairness of the world we live in.
-import importlib
-from importlib import util as importlib_util
 import inspect
 import argparse
 import html
 from pprint import pprint
-from dataclasses import dataclass
-from typing import Optional, Iterator
-
-def error_exit(msg):
-    print(f"error: {msg}", file=sys.stderr)
-    exit(1)
-
-# module loading ===============================================================
-
-def load_module(relpath):
-    """programmatically loads a module for doc generation from a path."""
-
-    abspath = os.path.abspath(relpath)
-
-    # ensure directory is in sys.path
-    dirpath = os.path.dirname(abspath)
-    sys.path.insert(0, dirpath)
-
-    # get importlib spec
-    name = os.path.splitext(os.path.basename(abspath))[0]
-    spec = importlib_util.find_spec(name)
-
-    # if module doesn't exist, instead of throwing a reasonable error, this
-    # does the **UNDOCUMENTED** behavior of returning None
-    if spec is None:
-        error_exit(f"could not load module at {abspath}")
-
-    module = importlib_util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-
-    return module
-
-# data structures for docs =====================================================
-
-def simple(obj):
-    """basically turns a class into an immutable struct"""
-    return dataclass(obj, frozen=True)
-
-@simple
-class ModuleMeta:
-    children: list
-
-@simple
-class ClassMeta:
-    sig: inspect.Signature
-    children: list
-
-@simple
-class FunctionMeta:
-    sig: inspect.Signature
-
-Meta = ModuleMeta | ClassMeta | FunctionMeta
-
-@simple
-class Entry:
-    """documentation for some object"""
-
-    name: str
-    docstring: Optional[str]
-    meta: Meta
-
-# doc generation ===============================================================
-
-def get_members(obj: object) -> list[object]:
-    # random stuff that appears in __dict__ for objects that I want to ignore
-    BANNED = {
-        '__dict__',
-        '__weakref__',
-    }
-
-    def aux():
-        if inspect.ismodule(obj):
-            for name, val in obj.__dict__.items():
-                mod = val.__module__ if hasattr(val, '__module__') else None
-
-                if not hasattr(val, '__module__') \
-                  or val.__module__ != obj.__name__:
-                    continue
-
-                yield val
-        else:
-            for name, val in obj.__dict__.items():
-                if name in BANNED:
-                    continue
-
-                yield val
-
-    return list(aux())
-
-def document_all(objs: list[object]) -> list[Entry]:
-    return list(filter(lambda x: x, map(document, objs)))
-
-def document(obj: object) -> Optional[Entry]:
-    """attempt to generate documentation for some object"""
-
-    # check if this should be documented, create metadata if so
-    meta = None
-
-    if inspect.ismodule(obj):
-        children = document_all(get_members(obj))
-        meta = ModuleMeta(children)
-    elif inspect.isclass(obj):
-        sig = inspect.signature(obj)
-        children = document_all(get_members(obj))
-        meta = ClassMeta(sig, children)
-    elif inspect.isfunction(obj):
-        sig = inspect.signature(obj)
-        meta = FunctionMeta(sig)
-    else:
-        # undocumentable
-        return None
-
-    # get other entry attrs
-    name = obj.__name__
-    docstring = inspect.getdoc(obj)
-
-    return Entry(name, docstring, meta)
+import analysis
 
 # html output ==================================================================
 
@@ -186,7 +64,7 @@ def gen_sig(decl: str, name: str, sig: inspect.Signature) -> str:
 
     return s
 
-def gen_children(children: list[Entry]) -> str:
+def gen_children(children: list[analysis.Entry]) -> str:
     s = ""
 
     s += "<div class='children'>"
@@ -196,15 +74,15 @@ def gen_children(children: list[Entry]) -> str:
 
     return s
 
-def gen_entry(entry: Entry) -> str:
+def gen_entry(entry: analysis.Entry) -> str:
     s = ""
 
     # decl
-    if isinstance(entry.meta, ModuleMeta):
+    if isinstance(entry.meta, analysis.ModuleMeta):
         s += f"<h1 class='decl module'>{entry.name}</h1>"
-    elif isinstance(entry.meta, ClassMeta):
+    elif isinstance(entry.meta, analysis.ClassMeta):
         s += gen_sig('class', entry.name, entry.meta.sig)
-    elif isinstance(entry.meta, FunctionMeta):
+    elif isinstance(entry.meta, analysis.FunctionMeta):
         s += gen_sig('def', entry.name, entry.meta.sig)
 
     # docstring
@@ -212,12 +90,13 @@ def gen_entry(entry: Entry) -> str:
         s += f"<p class='docstring'>{html.escape(entry.docstring)}</p>"
 
     # children
-    if isinstance(entry.meta, ModuleMeta) or isinstance(entry.meta, ClassMeta):
+    if isinstance(entry.meta, analysis.ModuleMeta) \
+        or isinstance(entry.meta, analysis.ClassMeta):
         s += gen_children(entry.meta.children)
 
     return s
 
-def gen_html(stylesheets: list[str], entries: list[Entry]) -> str:
+def gen_html(stylesheets: list[str], entries: list[analysis.Entry]) -> str:
     """generate document html"""
 
     s = ""
@@ -297,7 +176,7 @@ def main():
     args = parse_args()
 
     # gen docs for the module
-    docs = list(map(document, map(load_module, args.modules)))
+    docs = list(map(analysis.analyze, args.modules))
 
     # write everything
     dirpath = make_clean_dir(args.o)
