@@ -7,7 +7,8 @@ from common import *
 import os
 import runpy
 import inspect
-from inspect import Signature
+from inspect import Signature, Parameter
+import json
 
 # inspecting these on classes/modules breaks stuff
 BANNED_MEMBERS = {
@@ -18,11 +19,13 @@ BANNED_MEMBERS = {
 
 @simple
 class Function:
+    name: str
     sig: Signature
     doc: Optional[str]
 
 @simple
 class Class:
+    name: str
     sig: Signature
     doc: Optional[str]
 
@@ -44,24 +47,66 @@ class Registry:
     abspath: str
     modules: list[Module]
 
-def document_function(f) -> Function:
+    class Encoder(json.JSONEncoder):
+        def default(self, obj):
+            # simple classes can just use vars()
+            simple = [Function, Class, Module, Registry]
+            for c in simple:
+                if isinstance(obj, c):
+                    return vars(obj)
+
+            # signatures and signature-related objects need some processing
+            if isinstance(obj, Signature):
+                returns = None
+                if obj.return_annotation != Signature.empty:
+                    returns = inspect.formatannotation(obj.return_annotation)
+
+                return {
+                    "params": list(obj.parameters.items()),
+                    "returns": returns,
+                }
+            elif isinstance(obj, Parameter):
+                anno = None
+                if obj.annotation != Parameter.empty:
+                    anno = inspect.formatannotation(obj.annotation)
+
+                return {
+                    "name": obj.name,
+                    "kind": str(obj.kind).lower(),
+                    "anno": anno 
+                }
+
+            # leave everything else default
+            return json.JSONEncoder.default(self, obj)
+
+    def dumps(self, **kwargs):
+        """dump this registry to json with args passed through"""
+        return json.dumps(self, cls=Registry.Encoder, **kwargs)
+
+def getdoc(x) -> Optional[str]:
+    """gets docstring from both modules dicts and objects"""
+    return x.__doc__ if hasattr(x, '__doc__') else None
+
+def document_function(name: str, f) -> Function:
     return Function(
+        name=name,
         sig=inspect.signature(f),
-        doc=inspect.getdoc(f),
+        doc=getdoc(f),
     )
 
 def document_member_functions(d: dict) -> list[Function]:
     funcs = []
     for name, obj in d.items():
         if name not in BANNED_MEMBERS and inspect.isfunction(obj):
-            funcs.append(document_function(obj))
+            funcs.append(document_function(name, obj))
 
     return funcs
 
-def document_class(c) -> Class:
+def document_class(name: str, c) -> Class:
     return Class(
+        name=name,
         sig=inspect.signature(c),
-        doc=inspect.getdoc(c),
+        doc=getdoc(c),
         classes=document_member_classes(c.__dict__),
         functions=document_member_functions(c.__dict__),
     )
@@ -70,7 +115,7 @@ def document_member_classes(d: dict) -> list[Class]:
     classes = []
     for name, obj in d.items():
         if name not in BANNED_MEMBERS and inspect.isclass(obj):
-            classes.append(document_class(obj))
+            classes.append(document_class(name, obj))
 
     return classes
 
@@ -80,7 +125,7 @@ def document_module(abspath: str, data: dict) -> Module:
         name=data["__name__"],
         abspath=abspath,
         package=data["__package__"] or None,
-        doc=data["__doc__"],
+        doc=getdoc(data),
         classes=document_member_classes(data),
         functions=document_member_functions(data),
     )
@@ -166,4 +211,4 @@ def load(root_relpath: str, project_relpath: Optional[str] = None) -> Registry:
 from pprint import pprint
 if __name__ == '__main__':
     reg = load("./gdoc.py")
-    pprint(reg)
+    print(reg.dumps(indent=2))
