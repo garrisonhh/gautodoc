@@ -7,7 +7,7 @@ import os
 import argparse
 import registry
 from gconfig import Config
-from pprint import pprint # TODO remove
+from gbuild import build
 
 def gdoc_init(args):
     build_dir = os.path.relpath(args.build_dir, start=args.project_dir)
@@ -19,8 +19,7 @@ def gdoc_init(args):
 
 def gdoc_build(args):
     cfg = Config.load(args.project_dir)
-
-    pprint(cfg)    
+    build(cfg, args.project_dir)
 
 def dispatch_args():
     # main parser

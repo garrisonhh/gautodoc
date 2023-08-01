@@ -16,6 +16,8 @@ def get_abspath(dir_relpath):
 
 @simple
 class Config:
+    """record of configuration details for a documented project"""
+
     modules: list[str]
     build_dir: str
 
@@ -25,11 +27,19 @@ class Config:
                 return vars(obj)
             return json.JSONEncoder.default(self, obj)
 
-    def write(self, dir_relpath: str):
-        with open(get_abspath(dir_relpath), 'w') as f:
-            json.dump(self, f, cls=Config.Encoder, indent=2)
-
     @staticmethod
     def load(dir_relpath: str) -> Self:
-        with open(get_abspath(dir_relpath), 'r') as f:
-            return Config(**json.load(f))
+        """loads a project's configuration"""
+        try:
+            with open(get_abspath(dir_relpath), 'r') as f:
+                return Config(**json.load(f))
+        except FileNotFoundException as e:
+            error_exit(
+                f"failed to find {CONFIG_FILENAME} in {dir_relpath} :(\n" + \
+                f"did you forget to run `gdoc init`?"
+            )
+
+    def write(self, dir_relpath: str):
+        """writes configuration to the correct file"""
+        with open(get_abspath(dir_relpath), 'w') as f:
+            json.dump(self, f, cls=Config.Encoder, indent=2)
