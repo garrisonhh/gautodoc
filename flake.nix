@@ -7,8 +7,6 @@
     let
       # environment
       system = "x86_64-linux";
-
-      # project reqs
       pkgs = (import (nixpkgs)) {
         inherit system;
       };
@@ -19,8 +17,8 @@
       # developer shell
       devShell = mkShell {
         packages = [
-          pyPkgs.python
           libstdcpp
+          pyPkgs.python
         ];
 
         shellHook = ''
