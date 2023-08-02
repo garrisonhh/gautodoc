@@ -62,7 +62,7 @@ class Registry:
                     returns = inspect.formatannotation(obj.return_annotation)
 
                 return {
-                    "params": list(obj.parameters.items()),
+                    "params": list(obj.parameters.values()),
                     "returns": returns,
                 }
             elif isinstance(obj, Parameter):
@@ -84,7 +84,6 @@ class Registry:
         return json.dumps(self, cls=Registry.Encoder, **kwargs)
 
 def getdoc(x) -> Optional[str]:
-    """gets docstring from both modules dicts and objects"""
     return x.__doc__ if hasattr(x, '__doc__') else None
 
 def document_function(name: str, f) -> Function:
@@ -125,7 +124,7 @@ def document_module(abspath: str, data: dict) -> Module:
         name=data["__name__"],
         abspath=abspath,
         package=data["__package__"] or None,
-        doc=getdoc(data),
+        doc=data["__doc__"],
         classes=document_member_classes(data),
         functions=document_member_functions(data),
     )

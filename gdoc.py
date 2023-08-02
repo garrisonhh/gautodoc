@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-"""
-high-level implementation of 
-"""
 
 import os
 import argparse

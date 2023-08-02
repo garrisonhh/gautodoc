@@ -1,0 +1,109 @@
+/**
+ * modular styles for gdoc, this file should generally be repurposable for most
+ * webpages.
+ */
+
+/* vars */
+.gdoc {
+    --fg: #EEE;
+    --bg: #222;
+    --border: #AAA;
+
+    --syntax-none: #EA0;
+    --syntax-var: #0EA;
+    --syntax-type: #E0A;
+
+    --spacing: 5px;
+    --header-font: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    --code-font: 'Courier New', Courier, monospace;
+}
+
+/* sensible defaults for styles */
+.gdoc, .gdoc * {
+    border: none;
+    padding: 0px;
+    margin: 0px;
+}
+
+/* base div for a documented module */
+.gdoc {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+
+    width: 100%;
+    height: 100%;
+
+    margin: var(--spacing);
+    padding: calc(2 * var(--spacing));
+
+    color: var(--fg);
+    background-color: var(--bg);
+}
+
+.gdoc .doc {
+    display: flex;
+    flex-direction: row;
+    align-items: left;
+    
+    width: 100%;
+
+    margin: var(--spacing);
+    padding: var(--spacing);
+
+    white-space: pre-wrap;
+    font-size: small;
+    font-family: var(--code-font);
+}
+
+/* containers --------------------------------------------------------------- */
+
+.gdoc .error,
+.gdoc .module,
+.gdoc .class,
+.gdoc .function {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+
+    border: 1px solid var(--border);
+    border-radius: var(--spacing);
+    margin: var(--spacing);
+    padding: var(--spacing);
+}
+
+.gdoc .error {
+    color: #F00;
+}
+
+/* syntax ------------------------------------------------------------------- */
+
+/* the box that contains a decl */
+.gdoc .decl {
+    display: flex;
+    flex-direction: row;
+    align-items: left;
+    flex-wrap: wrap;
+    
+    width: 100%;
+}
+
+.gdoc .decl > * {
+    display: inline-flex;
+    flex-direction: row;
+
+    font-family: var(--code-font);
+    white-space: pre;
+}
+
+.gdoc .decl > .none {
+    color: var(--syntax-none);
+}
+
+.gdoc .decl > .var {
+    color: var(--syntax-var);
+}
+
+.gdoc .decl > .type {
+    color: var(--syntax-type);
+}
