@@ -25,11 +25,10 @@
     margin: 0px;
 }
 
-/* base div for a documented module */
 .gdoc {
     display: flex;
-    flex-direction: column;
-    align-items: left;
+    flex-direction: row;
+    align-items: top;
 
     width: 100%;
     height: 100%;
@@ -57,6 +56,15 @@
 }
 
 /* containers --------------------------------------------------------------- */
+
+.gdoc .modules {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+
+    margin: auto;
+    padding: calc(2 * var(--spacing));
+}
 
 .gdoc .error,
 .gdoc .module,
@@ -106,4 +114,37 @@
 
 .gdoc .decl > .type {
     color: var(--syntax-type);
+}
+
+/* index -------------------------------------------------------------------- */
+
+.gdoc .index {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+
+    left: absolute 0px;
+    width: 25%;
+
+    border: 1px solid var(--border);
+    border-radius: var(--spacing);
+    margin: var(--spacing);
+    padding: var(--spacing);
+
+    font: var(--code-font);
+    font-size: small;
+}
+
+.gdoc .index .index-node {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+
+    margin: 1px;
+    padding-left: 20px;
+}
+
+.gdoc .index .index-node .decl {
+    flex-wrap: nowrap;
+    overflow: hidden;
 }
