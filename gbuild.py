@@ -38,9 +38,6 @@ def build(cfg: Config, dir_relpath: str):
     setup_build_dir(build_abspath)
 
     # write registry
-    if len(cfg.modules) != 1:
-        error_exit(f"TODO multi-module support")
-
-    reg = registry.load(cfg.modules[0], dir_relpath)
+    reg = registry.load(cfg.modules, dir_relpath)
     with open(os.path.join(build_abspath, REGISTRY_FILENAME), 'w') as f:
         f.write(reg.dumps(indent=2))

@@ -4,11 +4,12 @@ loading python modules and packages intuitively
 
 from typing import Self, Optional
 from common import *
+import sys
 import os
-import runpy
+import json
 import inspect
 from inspect import Signature, Parameter
-import json
+from importlib import util as importlib_util
 
 # inspecting these on classes/modules breaks stuff
 BANNED_MEMBERS = {
@@ -86,6 +87,45 @@ class Registry:
 def getdoc(x) -> Optional[str]:
     return x.__doc__ if hasattr(x, '__doc__') else None
 
+def getmodule(x):
+    """useful for pruning out stuff that isn't from the same module"""
+    if inspect.ismodule(x):
+        return x
+    elif hasattr(x, '__module__'):
+        return sys.modules[x.__module__]
+    return None
+
+def should_document_member(name, obj, mod, pred=None):
+    """helper for member doc functions"""
+    if name in BANNED_MEMBERS:
+        return False
+    elif pred and not pred(obj):
+        return False
+    elif hasattr(obj, '__module__'):
+        return sys.modules[obj.__module__] is mod
+
+    return False
+
+def document_member_functions(x) -> list[Function]:
+    within = getmodule(x)
+
+    funcs = []
+    for name, obj in vars(x).items():
+        if should_document_member(name, obj, within, inspect.isfunction):
+            funcs.append(document_function(name, obj))
+
+    return funcs
+
+def document_member_classes(x) -> list[Class]:
+    within = getmodule(x)
+
+    classes = []
+    for name, obj in vars(x).items():
+        if should_document_member(name, obj, within, inspect.isclass):
+            classes.append(document_class(within, name, obj))
+
+    return classes
+
 def document_function(name: str, f) -> Function:
     return Function(
         name=name,
@@ -93,69 +133,60 @@ def document_function(name: str, f) -> Function:
         doc=getdoc(f),
     )
 
-def document_member_functions(d: dict) -> list[Function]:
-    funcs = []
-    for name, obj in d.items():
-        if name not in BANNED_MEMBERS and inspect.isfunction(obj):
-            funcs.append(document_function(name, obj))
-
-    return funcs
-
-def document_class(name: str, c) -> Class:
+def document_class(within, name: str, c) -> Class:
     return Class(
         name=name,
         sig=inspect.signature(c),
         doc=getdoc(c),
-        classes=document_member_classes(c.__dict__),
-        functions=document_member_functions(c.__dict__),
+        classes=document_member_classes(c),
+        functions=document_member_functions(c),
     )
 
-def document_member_classes(d: dict) -> list[Class]:
-    classes = []
-    for name, obj in d.items():
-        if name not in BANNED_MEMBERS and inspect.isclass(obj):
-            classes.append(document_class(name, obj))
-
-    return classes
-
-def document_module(abspath: str, data: dict) -> Module:
+def document_module(mod) -> Module:
     """loads a module from its __dict__"""
     return Module(
-        name=data["__name__"],
-        abspath=abspath,
-        package=data["__package__"] or None,
-        doc=data["__doc__"],
-        classes=document_member_classes(data),
-        functions=document_member_functions(data),
+        name=mod.__name__,
+        abspath=os.path.abspath(mod.__file__),
+        package=mod.__package__ or None,
+        doc=getdoc(mod),
+        classes=document_member_classes(mod),
+        functions=document_member_functions(mod),
     )
 
-def referenced_modules(mod: dict) -> list:
+def referenced_modules(mod) -> list:
     """get imported modules of a module dict"""
     modules = set()
-    for k, obj in mod.items():
-        if inspect.ismodule(obj):
-            # direct import
-            modules.add(obj)
-        elif inspect.isfunction(obj):
-            # detects 'from x import *'
-            guess = inspect.getmodule(obj)
-            if guess:
-                modules.add(guess)
+    for obj in vars(mod).values():
+        got = getmodule(obj)
+        if got:
+            modules.add(got)
 
     return list(modules)
 
-def find_modules(root_name: str, root_abspath: str) -> list[Module]:
-    # set up root module
-    data = runpy.run_path(root_abspath)
-    data["__name__"] = root_name
+def load_module(name: str, abspath: str):
+    spec = importlib_util.spec_from_file_location(name, abspath)
+    module = importlib_util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+
+    return module
+
+def find_modules(
+    root_abspaths: list[str],
+    project_abspath: str
+) -> list[Module]:
+    assert len(root_abspaths) > 0
+
+    queue = []
+    seen = set()
+    mods = []
+
+    # setup input modules
+    for root_abspath in root_abspaths:
+        mod_name, _ = os.path.splitext(os.path.basename(root_abspath))
+        queue.append(load_module(mod_name, root_abspath))
 
     # comb through modules and load
-    queue = referenced_modules(data)
-    known = set(root_abspath)
-    mods = [document_module(root_abspath, data)]
-
-    root_dir = os.path.dirname(root_abspath)
-
     while len(queue) > 0:
         # ensure it has a file (only untrue for specific python stdlib modules)
         obj = queue.pop()
@@ -163,24 +194,23 @@ def find_modules(root_name: str, root_abspath: str) -> list[Module]:
             continue
 
         # check if this module has been seen already
-        abspath = os.path.abspath(obj.__file__)
-        if abspath in known:
+        if obj in seen:
             continue
-
-        known.add(abspath)
+        else:
+            seen.add(obj)
 
         # check if this module is part of the project
-        if not abspath.startswith(root_dir):
+        abspath = os.path.abspath(obj.__file__)
+        if not abspath.startswith(project_abspath):
             continue
 
         # store this module and add its references to the queue
-        data = obj.__dict__
-        mods.append(document_module(abspath, data))
-        queue += referenced_modules(data)
+        mods.append(document_module(obj))
+        queue += referenced_modules(obj)
 
     return mods
 
-def load(root_relpath: str, project_relpath: Optional[str] = None) -> Registry:
+def load(root_relpaths: list[str], project_relpath: str) -> Registry:
     """
     load a root module and all of the submodules in the project that the root
     module references
@@ -188,26 +218,11 @@ def load(root_relpath: str, project_relpath: Optional[str] = None) -> Registry:
     if project_relpath is None, project_relpath will be set to the folder that
     root_relpath is located in
     """
-    # reshape paths
-    root_abspath = os.path.abspath(root_relpath)
-
-    if not project_relpath:
-        project_abspath = os.path.dirname(root_abspath)
-    else:
-        project_abspath = os.path.abspath(project_relpath)
-
-    root_name, _ = os.path.splitext(os.path.basename(root_abspath))
-
-    # find and register modules
-    modules = find_modules(root_name, root_abspath)
+    root_abspaths = list(map(os.path.abspath, root_relpaths))
+    project_abspath = os.path.abspath(project_relpath)
+    modules = find_modules(root_relpaths, project_abspath)
 
     return Registry(
         abspath=project_abspath,
         modules=modules,
     )
-
-# TODO remove
-from pprint import pprint
-if __name__ == '__main__':
-    reg = load("./gdoc.py")
-    print(reg.dumps(indent=2))
