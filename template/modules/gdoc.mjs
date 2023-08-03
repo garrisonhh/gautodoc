@@ -52,7 +52,20 @@ function renderModuleSig(name, uname) {
 }
 
 /** renders sig. set uname to make this div jumpable */
-function renderSig(declwith, name, sig, uname) {
+function renderModuleSig(name, uname) {
+    const div = makeDiv('decl', [
+        makeSpan('none', name),
+    ]);
+
+    if (typeof uname !== 'undefined') {
+        div.id = uname;
+    }
+
+    return div;
+}
+
+/** renders sig. set uname to make this div jumpable */
+function renderSig(declwith, name, sig, uname, uname) {
     const kids = [
         makeSpan('none', declwith + ' '),
         makeSpan('var', name),
@@ -103,6 +116,7 @@ function renderSig(declwith, name, sig, uname) {
 function renderFunction({ name, uname, sig, doc }) {
     const kids = [];
 
+    kids.push(renderSig('def', name, sig, uname));
     kids.push(renderSig('def', name, sig, uname));
     if (doc) kids.push(renderDoc(doc));
 
