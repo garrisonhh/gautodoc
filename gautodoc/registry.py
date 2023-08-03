@@ -3,7 +3,7 @@ loading python modules and packages intuitively
 """
 
 from typing import Self, Optional
-from common import *
+from gautodoc.common import *
 import sys
 import os
 import json

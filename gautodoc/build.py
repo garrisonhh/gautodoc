@@ -1,8 +1,8 @@
 import os
 import shutil
-from common import *
-from gconfig import Config
-import registry
+from gautodoc.common import *
+from gautodoc.config import Config
+from gautodoc import registry
 
 # where the templates/ dir is, relative to this file
 TEMPLATE_RELPATH = "./template"

@@ -6,7 +6,7 @@ to use this is create a config and write() it, or load() it from a file.
 from typing import Self
 import os
 import json
-from common import *
+from gautodoc.common import *
 
 CONFIG_FILENAME = '.gautodoc'
 

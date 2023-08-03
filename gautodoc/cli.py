@@ -2,9 +2,9 @@
 
 import os
 import argparse
-import registry
-from gconfig import Config
-from gbuild import build
+import gautodoc.registry
+from gautodoc.config import Config
+from gautodoc.build import build
 
 def gautodoc_init(args):
     build_dir = os.path.relpath(args.build_dir, start=args.project_dir)
@@ -18,9 +18,12 @@ def gautodoc_build(args):
     cfg = Config.load(args.project_dir)
     build(cfg, args.project_dir)
 
-def dispatch_args():
+def gautodoc_cli():
+    """does all of the argparsing and dispatches to subcommands"""
+
     # main parser
     gautodoc_parser = argparse.ArgumentParser(
+        prog="gautodoc",
         description="a stupid simple autodoc for python",
     )
     subparsers = gautodoc_parser.add_subparsers(
@@ -74,6 +77,3 @@ def dispatch_args():
     # parse args and dispatch
     args = gautodoc_parser.parse_args()
     args.dispatch(args)
-
-if __name__ == '__main__':
-    dispatch_args()

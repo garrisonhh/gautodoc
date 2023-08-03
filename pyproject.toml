@@ -4,18 +4,23 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gautodoc"
-version = "1.0.0"
+version = "0.0.0"
 authors = [
     { name = "Garrison Hinson-Hasty", email = "garrisonhh+dev@pm.me" },
 ]
 description = "stupid simple autodoc"
 readme = "README.md"
-requires-python = ">=3.11<4.0"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: FAFOLv2 License",
-    "Operating System :: Linux",
+    "Programming Language :: Python :: 3.11",
+    "License :: Free To Use But Restricted",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Documentation",
 ]
+
+[project.entry_points.console_scripts]
+gautodoc = "gautodoc.__main__"
 
 [project.urls]
 "Homepage" = "https://github.com/garrisonhh/gautodoc"
