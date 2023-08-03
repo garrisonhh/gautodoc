@@ -4,15 +4,16 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gautodoc"
-version = "0.0.0"
+version = "0.0.1"
 authors = [
     { name = "Garrison Hinson-Hasty", email = "garrisonhh+dev@pm.me" },
 ]
 description = "stupid simple autodoc"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "License :: Free To Use But Restricted",
     "Operating System :: POSIX :: Linux",
