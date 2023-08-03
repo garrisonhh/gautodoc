@@ -1,10 +1,10 @@
 /**
- * modular styles for gdoc, this file should generally be repurposable for most
+ * modular styles for gautodoc, this file should generally be repurposable for most
  * webpages.
  */
 
 /* vars */
-.gdoc {
+.gautodoc {
     --fg: #EEE;
     --bg: #222;
     --border: #AAA;
@@ -19,13 +19,13 @@
 }
 
 /* sensible defaults for styles */
-.gdoc, .gdoc * {
+.gautodoc, .gautodoc * {
     border: none;
     padding: 0px;
     margin: 0px;
 }
 
-.gdoc {
+.gautodoc {
     display: flex;
     flex-direction: row;
     align-items: top;
@@ -40,7 +40,7 @@
     background-color: var(--bg);
 }
 
-.gdoc .doc {
+.gautodoc .doc {
     display: flex;
     flex-direction: row;
     align-items: left;
@@ -57,7 +57,7 @@
 
 /* containers --------------------------------------------------------------- */
 
-.gdoc .modules {
+.gautodoc .modules {
     display: flex;
     flex-direction: column;
     align-items: left;
@@ -66,10 +66,10 @@
     padding: calc(2 * var(--spacing));
 }
 
-.gdoc .error,
-.gdoc .module,
-.gdoc .class,
-.gdoc .function {
+.gautodoc .error,
+.gautodoc .module,
+.gautodoc .class,
+.gautodoc .function {
     display: flex;
     flex-direction: column;
     align-items: left;
@@ -80,14 +80,14 @@
     padding: var(--spacing);
 }
 
-.gdoc .error {
+.gautodoc .error {
     color: #F00;
 }
 
 /* syntax ------------------------------------------------------------------- */
 
 /* the box that contains a decl */
-.gdoc .decl {
+.gautodoc .decl {
     display: flex;
     flex-direction: row;
     align-items: left;
@@ -96,7 +96,7 @@
     width: 100%;
 }
 
-.gdoc .decl > * {
+.gautodoc .decl > * {
     display: inline-flex;
     flex-direction: row;
 
@@ -104,21 +104,21 @@
     white-space: pre;
 }
 
-.gdoc .decl > .none {
+.gautodoc .decl > .none {
     color: var(--syntax-none);
 }
 
-.gdoc .decl > .var {
+.gautodoc .decl > .var {
     color: var(--syntax-var);
 }
 
-.gdoc .decl > .type {
+.gautodoc .decl > .type {
     color: var(--syntax-type);
 }
 
 /* index -------------------------------------------------------------------- */
 
-.gdoc .index {
+.gautodoc .index {
     display: flex;
     flex-direction: column;
     align-items: left;
@@ -135,7 +135,7 @@
     font-size: small;
 }
 
-.gdoc .index .index-node {
+.gautodoc .index .index-node {
     display: flex;
     flex-direction: column;
     align-items: left;
@@ -144,7 +144,7 @@
     padding-left: 20px;
 }
 
-.gdoc .index .index-node .decl {
+.gautodoc .index .index-node .decl {
     flex-wrap: nowrap;
     overflow: hidden;
 }

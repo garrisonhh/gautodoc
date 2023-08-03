@@ -14,7 +14,7 @@ def get_template_abspath():
 
 def setup_build_dir(build_abspath: str) -> str:
     """
-    given gdoc params, does various checks to make sure that the output dir
+    given gautodoc params, does various checks to make sure that the output dir
     is set up as required, and returns the abspath to place registries in.
     
     regardless of the state of everything, this should not 

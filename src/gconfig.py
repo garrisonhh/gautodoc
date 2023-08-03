@@ -1,5 +1,5 @@
 """
-dealing with reading/writing gdoc project configuration. all you need to do
+dealing with reading/writing gautodoc project configuration. all you need to do
 to use this is create a config and write() it, or load() it from a file.
 """
 
@@ -8,7 +8,7 @@ import os
 import json
 from common import *
 
-CONFIG_FILENAME = '.gdoc'
+CONFIG_FILENAME = '.gautodoc'
 
 def get_abspath(dir_relpath):
     """given relative dir, returns config filepath"""
@@ -36,7 +36,7 @@ class Config:
         except FileNotFoundException as e:
             error_exit(
                 f"failed to find {CONFIG_FILENAME} in {dir_relpath} :(\n" + \
-                f"did you forget to run `gdoc init`?"
+                f"did you forget to run `gautodoc init`?"
             )
 
     def write(self, dir_relpath: str):

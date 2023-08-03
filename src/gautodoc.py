@@ -6,7 +6,7 @@ import registry
 from gconfig import Config
 from gbuild import build
 
-def gdoc_init(args):
+def gautodoc_init(args):
     build_dir = os.path.relpath(args.build_dir, start=args.project_dir)
 
     Config(
@@ -14,26 +14,26 @@ def gdoc_init(args):
         build_dir=build_dir,
     ).write(dir_relpath=args.project_dir)
 
-def gdoc_build(args):
+def gautodoc_build(args):
     cfg = Config.load(args.project_dir)
     build(cfg, args.project_dir)
 
 def dispatch_args():
     # main parser
-    gdoc_parser = argparse.ArgumentParser(
+    gautodoc_parser = argparse.ArgumentParser(
         description="a stupid simple autodoc for python",
     )
-    subparsers = gdoc_parser.add_subparsers(
+    subparsers = gautodoc_parser.add_subparsers(
         required=True,
-        help="gdoc subcommands",
+        help="gautodoc subcommands",
     )
 
-    # gdoc init
+    # gautodoc init
     init_parser = subparsers.add_parser(
         'init',
-        help="initialize or reconfigure a gdoc project",
+        help="initialize or reconfigure a gautodoc project",
     )
-    init_parser.set_defaults(dispatch=gdoc_init)
+    init_parser.set_defaults(dispatch=gautodoc_init)
 
     init_parser.add_argument(
         'modules',
@@ -56,12 +56,12 @@ def dispatch_args():
         help="build output directory",
     )
 
-    # gdoc build
+    # gautodoc build
     build_parser = subparsers.add_parser(
         'build',
-        help="build a gdoc project",
+        help="build a gautodoc project",
     )
-    build_parser.set_defaults(dispatch=gdoc_build)
+    build_parser.set_defaults(dispatch=gautodoc_build)
 
     build_parser.add_argument(
         '-d',
@@ -72,7 +72,7 @@ def dispatch_args():
     )
 
     # parse args and dispatch
-    args = gdoc_parser.parse_args()
+    args = gautodoc_parser.parse_args()
     args.dispatch(args)
 
 if __name__ == '__main__':

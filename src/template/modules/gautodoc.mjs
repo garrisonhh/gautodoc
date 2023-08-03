@@ -52,20 +52,7 @@ function renderModuleSig(name, uname) {
 }
 
 /** renders sig. set uname to make this div jumpable */
-function renderModuleSig(name, uname) {
-    const div = makeDiv('decl', [
-        makeSpan('none', name),
-    ]);
-
-    if (typeof uname !== 'undefined') {
-        div.id = uname;
-    }
-
-    return div;
-}
-
-/** renders sig. set uname to make this div jumpable */
-function renderSig(declwith, name, sig, uname, uname) {
+function renderSig(declwith, name, sig, uname) {
     const kids = [
         makeSpan('none', declwith + ' '),
         makeSpan('var', name),
@@ -246,13 +233,13 @@ function addUniqueNames(obj) {
  * returns an html div that represents a documented registry. errors are
  * handled by creating 
  */
-export default async function gdoc() {
+export default async function gautodoc() {
     const reg = await fetchRegistry();
     if (!reg) return errorDiv(`couldn't fetch registry at ${REGISTRY_URL}`);
 
     addUniqueNames(reg);
 
-    return makeDiv('gdoc', [
+    return makeDiv('gautodoc', [
         renderIndex(reg),
         makeDiv('modules', reg.modules.map(renderModule)),
     ]);
